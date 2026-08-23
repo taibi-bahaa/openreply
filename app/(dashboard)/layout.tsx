@@ -24,12 +24,20 @@ export default async function DashboardLayout({
     orderBy: { connectedAt: "desc" },
     select: { username: true },
   });
+  
+  const youtubeAccounts = await prisma.youTubeAccount.findMany({
+    where: { workspaceId: workspace.id },
+    orderBy: { connectedAt: "desc" },
+    select: { title: true },
+  });
 
   return (
     <DashboardShell
       workspaceName={workspace.name}
       instagramUsername={accounts[0]?.username ?? null}
       instagramAccountCount={accounts.length}
+      youtubeChannelTitle={youtubeAccounts[0]?.title ?? null}
+      youtubeAccountCount={youtubeAccounts.length}
     >
       {children}
     </DashboardShell>

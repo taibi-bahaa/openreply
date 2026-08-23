@@ -38,6 +38,9 @@ interface DashboardStats {
     automation: { name: string };
     instagramAccount?: { username: string };
   }>;
+  youtubeAccounts: Array<{ id: string; title: string }>;
+  youtubeActiveAutomations: number;
+  youtubeRepliesSentToday: number;
 }
 
 export default function DashboardPage() {
@@ -195,6 +198,60 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* YouTube Section */}
+      <div className="pt-8 border-t border-border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-foreground">YouTube</h2>
+        </div>
+        
+        {!stats?.youtubeAccounts || stats.youtubeAccounts.length === 0 ? (
+          <div className="panel rounded p-6 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-muted"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-medium text-foreground">No YouTube Channel Connected</h3>
+              <p className="text-sm text-muted mt-1 max-w-sm">
+                Connect your YouTube channel to start automating comment replies for your videos.
+              </p>
+            </div>
+            <a
+              href="/api/youtube/connect"
+              className="px-4 py-2 bg-accent text-white rounded text-sm font-medium hover:bg-accent-hover transition-colors"
+            >
+              Connect YouTube
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            <StatCard
+              label="Connected Channels"
+              value={stats.youtubeAccounts.length}
+            />
+            <StatCard
+              label="Active Automations"
+              value={stats.youtubeActiveAutomations ?? 0}
+            />
+            <StatCard
+              label="Replies Sent Today"
+              value={stats.youtubeRepliesSentToday ?? 0}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

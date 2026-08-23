@@ -50,6 +50,32 @@ export function getMetaGraphApiVersion(): string {
   return process.env.META_GRAPH_API_VERSION ?? "v25.0";
 }
 
+const YOUTUBE_OAUTH_ENV = [
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "ENCRYPTION_KEY",
+] as const;
+
+export function getMissingYouTubeOAuthEnv(): string[] {
+  return YOUTUBE_OAUTH_ENV.filter((name) => {
+    const value = process.env[name];
+    if (!value) return true;
+    return name === "ENCRYPTION_KEY" && !HEX_32_BYTE.test(value);
+  });
+}
+
+export function getAIConfig(): { provider: string; apiKey: string; model: string } | null {
+  const provider = process.env.AI_PROVIDER ?? "openai";
+  const apiKey = process.env.AI_API_KEY;
+  const model = process.env.AI_MODEL;
+  
+  if (!apiKey || !model) {
+    return null;
+  }
+  
+  return { provider, apiKey, model };
+}
+
 export const serverEnvSchema = z.object({
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(16),

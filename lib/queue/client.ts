@@ -100,3 +100,34 @@ export function getDMQueue(): Queue<DmQueueJob> {
   }
   return dmQueue;
 }
+
+// ─── YouTube Queue ──────────────────────────────────────────────────────────
+
+export interface ProcessYouTubeCommentJob {
+  youtubeAccountId: string;
+  videoId: string;
+  commentId: string;
+  commentText: string;
+  authorName: string;
+  authorChannelId: string;
+  source: "POLLING";
+}
+
+export type YtQueueJob = ProcessYouTubeCommentJob;
+
+let ytQueue: Queue<YtQueueJob> | null = null;
+
+export function getYTQueue(): Queue<YtQueueJob> {
+  if (!ytQueue) {
+    ytQueue = new Queue<YtQueueJob>("yt-comment-processing", {
+      connection: getRedisConnection(),
+      defaultJobOptions: {
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { age: 300, count: 2000 },
+        attempts: 3,
+        backoff: { type: "custom" },
+      },
+    });
+  }
+  return ytQueue;
+}

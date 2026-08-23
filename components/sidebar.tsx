@@ -10,11 +10,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  // Instagram section
+  { label: "Instagram", section: true },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Overview", href: "/overview" },
   { label: "Inbox", href: "/inbox" },
   { label: "Campaigns", href: "/campaigns" },
   { label: "DM Logs", href: "/logs" },
+  // YouTube section
+  { label: "YouTube", href: "/youtube", section: true },
+  { label: "YT Automations", href: "/youtube/automations" },
+  { label: "YT Logs", href: "/youtube/logs" },
+  // Shared
   { label: "Settings", href: "/settings" },
   { label: "Diagnostics", href: "/diagnostics" },
 ];
@@ -62,26 +69,35 @@ export default function Sidebar({
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems.map((item, i) => {
             const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+              item.href ? pathname === item.href || pathname.startsWith(item.href + "/") : false;
+            
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                aria-current={isActive ? "page" : undefined}
-                className={`
-                  block px-3 py-2.5 rounded text-sm
-                  ${
-                    isActive
-                      ? "bg-surface-hover text-foreground font-medium"
-                      : "text-muted hover:text-foreground hover:bg-surface-hover"
-                  }
-                `}
-              >
-                {item.label}
-              </Link>
+              <div key={item.href || item.label + i}>
+                {item.section && (
+                  <div className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    {item.label}
+                  </div>
+                )}
+                {item.href && (
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`
+                      block px-3 py-2.5 rounded text-sm
+                      ${
+                        isActive
+                          ? "bg-surface-hover text-foreground font-medium"
+                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      }
+                    `}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
             );
           })}
         </nav>

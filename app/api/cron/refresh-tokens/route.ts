@@ -97,12 +97,86 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const youtubeAccountsToRefresh = await prisma.youTubeAccount.findMany({
+    where: {
+      accessToken: { not: "" },
+      refreshToken: { not: "" },
+      tokenExpiresAt: {
+        not: null,
+        lte: cutoffDate,
+      },
+    },
+    select: {
+      id: true,
+      workspaceId: true,
+      channelId: true,
+      title: true,
+      refreshToken: true,
+    },
+  });
+
+  const youtubeResults: Array<{
+    youtubeAccountId: string;
+    title: string;
+    status: "refreshed" | "failed";
+    error?: string;
+  }> = [];
+
+  const { refreshGoogleToken } = await import("@/lib/youtube/oauth");
+
+  for (const account of youtubeAccountsToRefresh) {
+    try {
+      const currentRefreshToken = decryptToken(account.refreshToken);
+      const { accessToken: newAccessToken, expiresIn } = await refreshGoogleToken(currentRefreshToken);
+      
+      const encryptedAccessToken = encryptToken(newAccessToken);
+      const newExpiry = new Date(Date.now() + expiresIn * 1000);
+
+      await prisma.youTubeAccount.update({
+        where: { id: account.id },
+        data: {
+          accessToken: encryptedAccessToken,
+          tokenExpiresAt: newExpiry,
+        },
+      });
+
+      youtubeResults.push({
+        youtubeAccountId: account.id,
+        title: account.title,
+        status: "refreshed",
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      await prisma.operationalEvent.create({
+        data: {
+          workspaceId: account.workspaceId,
+          source: "TOKEN_REFRESH",
+          level: "ERROR",
+          message: `YouTube token refresh failed for ${account.title}: ${errorMessage}`,
+          payload: {
+            youtubeAccountId: account.id,
+            channelId: account.channelId,
+          },
+        },
+      });
+
+      youtubeResults.push({
+        youtubeAccountId: account.id,
+        title: account.title,
+        status: "failed",
+        error: errorMessage,
+      });
+    }
+  }
+
   return NextResponse.json({
     success: true,
     data: {
-      totalProcessed: accountsToRefresh.length,
+      totalInstagramProcessed: accountsToRefresh.length,
+      totalYouTubeProcessed: youtubeAccountsToRefresh.length,
       workspacesReset: usageReset.count,
       results,
+      youtubeResults,
     },
   });
 }

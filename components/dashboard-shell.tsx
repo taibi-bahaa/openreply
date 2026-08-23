@@ -9,6 +9,8 @@ interface DashboardShellProps {
   workspaceName: string;
   instagramUsername: string | null;
   instagramAccountCount: number;
+  youtubeChannelTitle?: string | null;
+  youtubeAccountCount?: number;
 }
 
 export default function DashboardShell({
@@ -16,6 +18,8 @@ export default function DashboardShell({
   workspaceName,
   instagramUsername,
   instagramAccountCount,
+  youtubeChannelTitle,
+  youtubeAccountCount,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -35,6 +39,13 @@ export default function DashboardShell({
           instagramUsername={instagramUsername}
           instagramAccountCount={instagramAccountCount}
         />
+
+        {!!youtubeAccountCount && youtubeAccountCount > 0 && (
+          <div className="bg-surface border-b border-border px-4 lg:px-8 py-2 text-xs text-muted flex items-center gap-2">
+            <span className="font-medium">YouTube Connected:</span>
+            {youtubeAccountCount > 1 ? `${youtubeAccountCount} channels` : youtubeChannelTitle}
+          </div>
+        )}
 
         {/* overflow-x-hidden: enabling vertical scrolling makes the browser
             allow horizontal scrolling too, which lets a wide child drag the

@@ -25,6 +25,7 @@ OpenReply is built around Meta's official Instagram private replies. It does not
 ## Features
 
 - Keyword to DM. Match one or many keywords per post, whole-word or partial.
+- YouTube Support. Keyword-triggered comment replies, video analytics, subscriber gate, and AI-powered replies for your YouTube channel.
 - Optional public reply. Post a visible comment reply on top of the DM.
 - Tracked links. Swap a link for a tracked redirect and see clicks and CTR per campaign.
 - Two link buttons. Send up to two tappable link buttons in one DM, each a separate tracked link with its own click stats.
@@ -48,11 +49,15 @@ OpenReply is built around Meta's official Instagram private replies. It does not
 
 The web app receives the webhook and serves the dashboard. A separate worker process does the sending, because the send has to survive rate limits and retries. Both talk to the same Postgres and Redis.
 
+## MCP Integration
+
+OpenReply includes a built-in Model Context Protocol (MCP) server that lets Claude Desktop (or any MCP-compatible AI agent) query your Instagram & YouTube analytics, manage automations, and reply to comments interactively. See [docs/mcp-setup.md](docs/mcp-setup.md) for full instructions on setting up Claude Desktop with OpenReply.
+
 ## Quick start
 
 You need a few free accounts before anything works: a Meta developer app, a Resend account for login emails, and somewhere to host (Vercel for the web app, Railway for the worker plus Postgres and Redis). The Instagram account you connect has to be a Business or Creator account, not a personal one.
 
-The honest version: the code deploys in minutes, but the Meta app setup is the part that takes real time. Read [docs/setup.md](docs/setup.md) before you start. It is the single setup guide, covering hosting, your domain, the environment, and every Meta wrong turn so you do not have to find them yourself.
+The honest version: the code deploys in minutes, but the Meta app setup is the part that takes real time. Read [docs/setup.md](docs/setup.md) before you start. It is the single setup guide, covering hosting, your domain, the environment, and every Meta wrong turn so you do not have to find them yourself. For YouTube support, you will also need to configure Google API access. See [docs/youtube-setup.md](docs/youtube-setup.md) for step-by-step instructions.
 
 ### Deploy the web app
 
@@ -73,7 +78,7 @@ npm run worker            # in a second terminal, this sends the DMs
 
 Two processes, always. `npm run dev` serves the app and receives webhooks. `npm run worker` is what actually sends the messages. If comments come in and no DM ever arrives, the worker is the first thing to check.
 
-Full environment variables and the production layout are in [docs/setup.md](docs/setup.md).
+Full environment variables and the production layout are in [docs/setup.md](docs/setup.md) and [docs/youtube-setup.md](docs/youtube-setup.md) (for YouTube specific vars like `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`).
 
 ## Set it up with your AI assistant
 

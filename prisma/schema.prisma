@@ -85,6 +85,10 @@ model Workspace {
   webhookEvents     WebhookEvent[]
   operationalEvents OperationalEvent[]
 
+  youtubeAccounts  YouTubeAccount[]
+  youtubeAutomations YouTubeAutomation[]
+  youtubeCommentLogs YouTubeCommentLog[]
+
   @@index([ownerId])
 }
 
@@ -272,7 +276,7 @@ model ProcessedComment {
 model TrackedLink {
   id             String   @id @default(cuid())
   workspaceId    String
-  automationId   String
+  automationId   String?
   slug           String   @unique
   label          String?
   destinationUrl String
@@ -280,11 +284,15 @@ model TrackedLink {
   updatedAt      DateTime @updatedAt
 
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  automation Automation  @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automation Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
   clicks     LinkClick[]
+  
+  youtubeAutomationId String?
+  youtubeAutomation YouTubeAutomation? @relation(fields: [youtubeAutomationId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
   @@index([automationId])
+  @@index([youtubeAutomationId])
 }
 
 model LinkClick {
@@ -345,6 +353,147 @@ model OperationalEvent {
   @@index([createdAt])
 }
 
+// ─── YouTube Models ──────────────────────────────────────────────────────────
+
+model YouTubeAccount {
+  id                String   @id @default(cuid())
+  workspaceId       String
+  channelId         String   @unique
+  title             String
+  customUrl         String?
+  thumbnailUrl      String?
+  subscriberCount   Int      @default(0)
+  videoCount        Int      @default(0)
+  accessToken       String   // AES-256-GCM encrypted
+  refreshToken      String   // AES-256-GCM encrypted
+  tokenExpiresAt    DateTime?
+  connectedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  workspace           Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  automations         YouTubeAutomation[]
+  commentLogs         YouTubeCommentLog[]
+  subscriberSnapshots YouTubeSubscriberSnapshot[]
+  videoAnalytics      YouTubeVideoAnalytics[]
+
+  @@index([workspaceId])
+}
+
+model YouTubeAutomation {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  youtubeAccountId String
+
+  name             String
+  goal             String?
+  videoId          String?  // null = any video
+  videoTitle       String?
+  videoThumbnail   String?
+  matchAnyVideo    Boolean  @default(false)
+  pendingNextVideo Boolean  @default(false)
+
+  keywords         String[]
+  matchAnyWord     Boolean  @default(false)
+  wholeWordMatch   Boolean  @default(true)
+
+  // Reply configuration
+  replyMode        YouTubeReplyMode @default(TEMPLATE)
+  replyTemplates   String[]         @default([])
+  aiPrompt         String?
+  aiModel          String?          @default("gemini-2.0-flash")
+
+  // Gates & Features
+  requireSubscribe Boolean  @default(false)
+  notSubscribedReply String?
+
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  youtubeAccount YouTubeAccount      @relation(fields: [youtubeAccountId], references: [id], onDelete: Cascade)
+  commentLogs    YouTubeCommentLog[]
+  trackedLinks   TrackedLink[]
+
+  @@index([workspaceId])
+  @@index([youtubeAccountId])
+  @@index([videoId])
+}
+
+model YouTubeCommentLog {
+  id                  String   @id @default(cuid())
+  workspaceId         String
+  youtubeAccountId    String
+  automationId        String?
+
+  videoId             String
+  parentCommentId     String
+  replyCommentId      String?
+  authorName          String
+  authorChannelId     String
+  commentText         String
+  matchedKeyword      String?
+  replyText           String?
+  replyMode           YouTubeReplyMode @default(TEMPLATE)
+  status              YouTubeLogStatus @default(SENT)
+  errorMessage        String?
+  repliedAt           DateTime @default(now())
+
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  youtubeAccount YouTubeAccount     @relation(fields: [youtubeAccountId], references: [id], onDelete: Cascade)
+  automation     YouTubeAutomation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+
+  @@unique([youtubeAccountId, parentCommentId])
+  @@index([workspaceId])
+  @@index([automationId])
+  @@index([videoId])
+}
+
+model YouTubeVideoAnalytics {
+  id               String   @id @default(cuid())
+  youtubeAccountId String
+  videoId          String
+  title            String
+  thumbnailUrl     String?
+  publishedAt      DateTime
+  viewCount        Int      @default(0)
+  likeCount        Int      @default(0)
+  commentCount     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  youtubeAccount YouTubeAccount @relation(fields: [youtubeAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([youtubeAccountId, videoId])
+  @@index([youtubeAccountId])
+}
+
+model YouTubeSubscriberSnapshot {
+  id               String   @id @default(cuid())
+  youtubeAccountId String
+  date             DateTime @db.Date
+  subscriberCount  Int
+  videoCount       Int      @default(0)
+  viewCount        BigInt   @default(0)
+  createdAt        DateTime @default(now())
+
+  youtubeAccount YouTubeAccount @relation(fields: [youtubeAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([youtubeAccountId, date])
+  @@index([youtubeAccountId, date])
+}
+
+/// Shared dedup set for YouTube comments. A comment id present here means it
+/// has already been queued for processing.
+model YouTubeProcessedComment {
+  id               String   @id @default(cuid())
+  youtubeAccountId String
+  commentId        String   @unique
+  source           String   // "POLLING"
+  seenAt           DateTime @default(now())
+
+  @@index([youtubeAccountId])
+}
+
 enum WorkspaceRole {
   OWNER
   ADMIN
@@ -385,4 +534,17 @@ enum OperationalEventLevel {
   INFO
   WARNING
   ERROR
+}
+
+enum YouTubeReplyMode {
+  TEMPLATE
+  AI_GENERATED
+}
+
+enum YouTubeLogStatus {
+  SENT
+  FAILED
+  SKIPPED_QUOTA
+  SKIPPED_SUBSCRIBER
+  SKIPPED_DEDUP
 }

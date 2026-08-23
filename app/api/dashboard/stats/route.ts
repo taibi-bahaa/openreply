@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
     recentLogs,
     user,
     contactRows,
+    youtubeAccounts,
+    youtubeActiveAutomations,
+    youtubeRepliesSentToday,
   ] = await Promise.all([
     prisma.workspace.findUnique({
       where: { id: workspaceId },
@@ -141,12 +144,25 @@ export async function GET(request: NextRequest) {
           select: { name: true, email: true },
         })
       : Promise.resolve(null),
-    // Distinct people who have interacted, counted as "contacts".
     prisma.dmLog.findMany({
       where: { workspaceId, ...accountFilter },
       distinct: ["commenterId"],
       select: { commenterId: true },
     }),
+    prisma.youTubeAccount.findMany({
+      where: { workspaceId },
+      select: { id: true, channelId: true, title: true }
+    }),
+    prisma.youTubeAutomation.count({
+      where: { workspaceId, isActive: true }
+    }),
+    prisma.youTubeCommentLog.count({
+      where: {
+        workspaceId,
+        status: "SENT",
+        repliedAt: { gte: todayStart }
+      }
+    })
   ]);
 
   const dailyDMs: { date: string; count: number }[] = [];
@@ -212,6 +228,9 @@ export async function GET(request: NextRequest) {
       topKeywords,
       dailyDMs,
       recentLogs,
+      youtubeAccounts,
+      youtubeActiveAutomations,
+      youtubeRepliesSentToday,
     },
   });
 }
