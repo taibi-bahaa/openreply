@@ -114,6 +114,7 @@ async function processYouTubeComment(job: Job<ProcessYouTubeCommentJob>): Promis
           trackedLinks: automation.trackedLinks,
         });
       } else if (automation.replyMode === "AI_GENERATED") {
+        try {
           const aiResult = await generateReply({
             platform: "youtube",
             videoOrPostTitle: "",
