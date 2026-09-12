@@ -5,16 +5,17 @@ import { canManageWorkspace, getCurrentWorkspaceContext } from "@/lib/workspace-
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const workspaceId = await getCurrentWorkspaceId();
     if (!workspaceId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const automation = await prisma.youTubeAutomation.findFirst({
-      where: { id: params.id, workspaceId },
+      where: { id, workspaceId },
       include: {
         _count: {
           select: { commentLogs: true },
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getCurrentWorkspaceContext();
     if (!context || !canManageWorkspace(context.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,7 +49,7 @@ export async function PATCH(
     const body = await request.json();
 
     const automation = await prisma.youTubeAutomation.findFirst({
-      where: { id: params.id, workspaceId: context.workspaceId },
+      where: { id, workspaceId: context.workspaceId },
     });
 
     if (!automation) {
@@ -55,7 +57,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.youTubeAutomation.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
     });
 
@@ -68,16 +70,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const context = await getCurrentWorkspaceContext();
     if (!context || !canManageWorkspace(context.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const automation = await prisma.youTubeAutomation.findFirst({
-      where: { id: params.id, workspaceId: context.workspaceId },
+      where: { id, workspaceId: context.workspaceId },
     });
 
     if (!automation) {
@@ -85,7 +88,7 @@ export async function DELETE(
     }
 
     await prisma.youTubeAutomation.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
