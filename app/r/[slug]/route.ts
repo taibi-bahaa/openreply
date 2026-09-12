@@ -27,17 +27,19 @@ export async function GET(request: NextRequest, { params }: RedirectRouteProps) 
     return NextResponse.redirect(new URL("/", request.url), { status: 302 });
   }
 
-  await prisma.linkClick.create({
-    data: {
-      workspaceId: trackedLink.workspaceId,
-      automationId: trackedLink.automationId ?? undefined,
-      instagramAccountId: trackedLink.automation?.instagramAccountId ?? undefined,
-      trackedLinkId: trackedLink.id,
-      ipHash: hashClickIp(getRequestIp(request)),
-      userAgent: request.headers.get("user-agent"),
-      referrer: request.headers.get("referer"),
-    },
-  });
+  if (trackedLink.automationId && trackedLink.automation?.instagramAccountId) {
+    await prisma.linkClick.create({
+      data: {
+        workspaceId: trackedLink.workspaceId,
+        automationId: trackedLink.automationId,
+        instagramAccountId: trackedLink.automation.instagramAccountId,
+        trackedLinkId: trackedLink.id,
+        ipHash: hashClickIp(getRequestIp(request)),
+        userAgent: request.headers.get("user-agent"),
+        referrer: request.headers.get("referer"),
+      },
+    });
+  }
 
   return NextResponse.redirect(trackedLink.destinationUrl, { status: 302 });
 }
