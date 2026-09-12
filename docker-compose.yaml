@@ -1,0 +1,85 @@
+﻿services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openreply
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-BahaSoft2026!Postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d openreply"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-BahaSoft2026!Postgres}@postgres:5432/openreply?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://openreply.bahadigital.io}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-440538a79854ef249a039775079a489bd0b32525e9821815e1cb2fbc9eaec0e4}
+      - CRON_SECRET=${CRON_SECRET:-35a2db39d2e16c9ae45a16315ee4fdf56f91f37937397b21a37c9fb332c96c56}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-c2d5bbcbfa1fcefeee6d8ba9fe4fbdc0776b268b8db4e43f55092a9b6c00dce0}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-taibi.bahaa@gmail.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-BahaSoft2026!Admin}
+      - EMAIL_FROM=${EMAIL_FROM:-OpenReply <login@bahadigital.io>}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - META_GRAPH_API_VERSION=${META_GRAPH_API_VERSION:-v25.0}
+      - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID:-}
+      - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET:-}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET:-}
+      - WEBHOOK_VERIFY_TOKEN=${WEBHOOK_VERIFY_TOKEN:-}
+    ports:
+      - "3000:3000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_started
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-BahaSoft2026!Postgres}@postgres:5432/openreply?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-c2d5bbcbfa1fcefeee6d8ba9fe4fbdc0776b268b8db4e43f55092a9b6c00dce0}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-taibi.bahaa@gmail.com}
+      - META_GRAPH_API_VERSION=${META_GRAPH_API_VERSION:-v25.0}
+      - INSTAGRAM_APP_ID=${INSTAGRAM_APP_ID:-}
+      - INSTAGRAM_APP_SECRET=${INSTAGRAM_APP_SECRET:-}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET:-}
+
+volumes:
+  pgdata:
+  redisdata:
