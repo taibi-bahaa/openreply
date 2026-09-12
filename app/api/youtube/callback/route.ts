@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const workspaceId = verifyOAuthState(state);
+    const payload = verifyOAuthState(state);
+    if (!payload || !payload.workspaceId) {
+      return NextResponse.redirect(`${getBaseUrl()}/settings?youtube=invalid_state`);
+    }
+    const workspaceId = payload.workspaceId;
     const redirectUri = `${getBaseUrl()}/api/youtube/callback`;
     
     const { accessToken, refreshToken, expiresIn } = await exchangeGoogleCode(code, redirectUri);

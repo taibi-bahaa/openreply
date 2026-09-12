@@ -30,8 +30,8 @@ export async function GET(request: NextRequest, { params }: RedirectRouteProps) 
   await prisma.linkClick.create({
     data: {
       workspaceId: trackedLink.workspaceId,
-      automationId: trackedLink.automationId,
-      instagramAccountId: trackedLink.automation.instagramAccountId,
+      automationId: trackedLink.automationId ?? undefined,
+      instagramAccountId: trackedLink.automation?.instagramAccountId ?? undefined,
       trackedLinkId: trackedLink.id,
       ipHash: hashClickIp(getRequestIp(request)),
       userAgent: request.headers.get("user-agent"),
