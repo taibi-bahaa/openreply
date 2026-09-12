@@ -52,7 +52,7 @@ export function registerQuotaTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error fetching API quota status: \${error.message}\` }],
+          content: [{ type: "text", text: `Error fetching API quota status: ${error.message}` }],
           isError: true,
         };
       }

@@ -37,7 +37,7 @@ export function registerAutomationsTools(server: McpServer) {
           
           results.push(...igAutos.map((a: any) => ({
             id: a.id,
-            name: a.name || \`Automation \${a.id}\`,
+            name: a.name || `Automation ${a.id}`,
             platform: "instagram",
             targetPost: a.mediaId || "All posts",
             keywords: a.triggerKeywords || [],
@@ -53,7 +53,7 @@ export function registerAutomationsTools(server: McpServer) {
           
           results.push(...ytAutos.map((a: any) => ({
             id: a.id,
-            name: a.name || \`YT Auto \${a.id}\`,
+            name: a.name || `YT Auto ${a.id}`,
             platform: "youtube",
             targetVideo: a.videoId || "All videos",
             keywords: a.keywords || [],
@@ -67,7 +67,7 @@ export function registerAutomationsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error listing automations: \${error.message}\` }],
+          content: [{ type: "text", text: `Error listing automations: ${error.message}` }],
           isError: true,
         };
       }
@@ -111,7 +111,7 @@ export function registerAutomationsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error toggling automation: \${error.message}\` }],
+          content: [{ type: "text", text: `Error toggling automation: ${error.message}` }],
           isError: true,
         };
       }

@@ -76,15 +76,15 @@ export function registerReplyTools(server: McpServer) {
               type: "text", 
               text: JSON.stringify({ 
                 success: true, 
-                replyId: \`simulated-\${Date.now()}\`, 
-                message: \`Reply posted to \${platform} comment \${commentId}\` 
+                replyId: `simulated-${Date.now()}`, 
+                message: `Reply posted to ${platform} comment ${commentId}` 
               }, null, 2) 
             }
           ],
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error posting reply: \${error.message}\` }],
+          content: [{ type: "text", text: `Error posting reply: ${error.message}` }],
           isError: true,
         };
       }
@@ -103,9 +103,9 @@ export function registerReplyTools(server: McpServer) {
       try {
         // Typically this would call @/lib/ai/reply-generator
         // We can simulate or make an actual API call depending on the environment
-        const suggestedReply = \`Thanks for commenting on "\${videoOrPostTitle}"! \${
-          linkUrl ? \`Check out this link: \${linkUrl}\` : ''
-        }\`;
+        const suggestedReply = `Thanks for commenting on "${videoOrPostTitle}"! ${
+          linkUrl ? `Check out this link: ${linkUrl}` : ''
+        }`;
         
         return {
           content: [
@@ -121,7 +121,7 @@ export function registerReplyTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error generating AI reply: \${error.message}\` }],
+          content: [{ type: "text", text: `Error generating AI reply: ${error.message}` }],
           isError: true,
         };
       }

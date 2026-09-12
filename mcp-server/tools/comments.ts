@@ -76,7 +76,7 @@ export function registerCommentsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error fetching recent comments: \${error.message}\` }],
+          content: [{ type: "text", text: `Error fetching recent comments: ${error.message}` }],
           isError: true,
         };
       }

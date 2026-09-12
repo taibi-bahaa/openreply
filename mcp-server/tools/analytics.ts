@@ -71,7 +71,7 @@ export function registerAnalyticsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error fetching channel overview: \${error.message}\` }],
+          content: [{ type: "text", text: `Error fetching channel overview: ${error.message}` }],
           isError: true,
         };
       }
@@ -111,7 +111,7 @@ export function registerAnalyticsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error fetching video analytics: \${error.message}\` }],
+          content: [{ type: "text", text: `Error fetching video analytics: ${error.message}` }],
           isError: true,
         };
       }
@@ -149,7 +149,7 @@ export function registerAnalyticsTools(server: McpServer) {
         };
       } catch (error: any) {
         return {
-          content: [{ type: "text", text: \`Error fetching growth history: \${error.message}\` }],
+          content: [{ type: "text", text: `Error fetching growth history: ${error.message}` }],
           isError: true,
         };
       }
