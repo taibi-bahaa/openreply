@@ -1,4 +1,5 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Nodemailer from "next-auth/providers/nodemailer";
 import Resend from "next-auth/providers/resend";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -22,6 +23,49 @@ export const EMAIL_PROVIDER_ID = smtpServer ? "nodemailer" : "resend";
 export const authConfig = {
   adapter: PrismaAdapter(prisma as unknown as AdapterPrismaClient),
   providers: [
+    Credentials({
+      id: "credentials",
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+
+        const email = String(credentials.email).trim().toLowerCase();
+        const password = String(credentials.password);
+
+        const adminEmail = (process.env.ADMIN_EMAIL ?? "taibi.bahaa@gmail.com").trim().toLowerCase();
+        const adminPassword = process.env.ADMIN_PASSWORD ?? "BahaSoft2026!Admin";
+
+        if (email === adminEmail && password === adminPassword) {
+          let user = await prisma.user.findUnique({
+            where: { email },
+          });
+
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                email,
+                name: "Bahaa Taibi",
+                emailVerified: new Date(),
+              },
+            });
+          }
+
+          await ensureWorkspaceForUser(user.id, user.email);
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name ?? "Bahaa Taibi",
+          };
+        }
+
+        return null;
+      },
+    }),
     smtpServer
       ? Nodemailer({ server: smtpServer, from: emailFrom })
       : Resend({
@@ -30,9 +74,15 @@ export const authConfig = {
         }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token, user }) {
       if (session.user) {
-        session.user.id = user.id;
+        session.user.id = (token?.id as string) ?? user?.id;
       }
       return session;
     },
@@ -49,7 +99,7 @@ export const authConfig = {
     verifyRequest: "/verify-request",
   },
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
   trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
